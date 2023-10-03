@@ -1,5 +1,7 @@
 github.com/abhirockzz/amazon-bedrock-go-inference-params v0.0.0-20230930053247-b3d63e587849 h1:OgK4fiDaJuGYRTji2yL9AbBXHbuGUhdMxfVVwekbeAs=
 github.com/abhirockzz/amazon-bedrock-go-inference-params v0.0.0-20230930053247-b3d63e587849/go.mod h1:r/RT4MKbukdxjMjCA1547QO7SLRP4gpiUjvKqDomPcM=
+github.com/abhirockzz/amazon-bedrock-go-inference-params v0.0.0-20231003045841-a5985794d7ae h1:fXax6PqkCbAia476s4UEKZz+agneKwTAYs8ZBPBVTyc=
+github.com/abhirockzz/amazon-bedrock-go-inference-params v0.0.0-20231003045841-a5985794d7ae/go.mod h1:r/RT4MKbukdxjMjCA1547QO7SLRP4gpiUjvKqDomPcM=
 github.com/aws/aws-sdk-go-v2 v1.21.0 h1:gMT0IW+03wtYJhRqTVYn0wLzwdnK9sRMcxmtfGzRdJc=
 github.com/aws/aws-sdk-go-v2 v1.21.0/go.mod h1:/RfNgGmRxI+iFOB1OeJUyxiU+9s88k3pfHvDagGEp0M=
 github.com/aws/aws-sdk-go-v2/aws/protocol/eventstream v1.4.13 h1:OPLEkmhXf6xFPiz0bLeDArZIDx1NNS4oJyG4nv3Gct0=
@@ -46,6 +48,8 @@ github.com/stretchr/objx v0.1.0/go.mod h1:HFkY916IF+rwdDfMAkV7OtwuqBVzrE8GR6GFx+
 github.com/stretchr/testify v1.8.4 h1:CcVxjf3Q8PM0mHUKJCdn+eZZtm5yQwehR5yeSVQQcUk=
 github.com/tmc/langchaingo v0.0.0-20230829032728-c85d3967da08 h1:ga3HJeF9v5Lyob60oXuasXmeWMwKhygnUnXxYQRj1YI=
 github.com/tmc/langchaingo v0.0.0-20230829032728-c85d3967da08/go.mod h1:vCdA1t5qnS5YPkDsznowOziBHFn0Ul11ZqfJ2GOAi0s=
+github.com/tmc/langchaingo v0.0.0-20230929160525-e16b77704b8d h1:i4+wYULVM2/3Yb/aDE7Z4s2v7vqtQERQWh5lopBEuig=
+github.com/tmc/langchaingo v0.0.0-20230929160525-e16b77704b8d/go.mod h1:R+a8fqt6nmKyYj7KSpr/m9oxqE6OJLbLyO9pxeHpjLU=
 gopkg.in/check.v1 v0.0.0-20161208181325-20d25e280405/go.mod h1:Co6ibVJAznAaIkqp8huTwlJQCZ016jof/cbN4VW5Yz0=
 gopkg.in/yaml.v2 v2.2.8/go.mod h1:hI93XBmqTisBFMUTm0b8Fm+jr3Dg1NNxqwp+5A1VGuI=
 gopkg.in/yaml.v3 v3.0.1 h1:fxVm/GzAzEWqLHuvctI91KS9hhNmmWOoWu0XTYJS7CA=

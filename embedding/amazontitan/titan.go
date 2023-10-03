@@ -43,14 +43,14 @@ func New(region string) (*TitanEmbedder, error) {
 
 }
 
-func (te *TitanEmbedder) EmbedDocuments(ctx context.Context, texts []string) ([][]float64, error) {
+func (te *TitanEmbedder) EmbedDocuments(ctx context.Context, texts []string) ([][]float32, error) {
 
 	batchedTexts := embeddings.BatchTexts(
 		embeddings.MaybeRemoveNewLines(texts, te.StripNewLines),
 		te.BatchSize,
 	)
 
-	emb := make([][]float64, 0, len(texts))
+	emb := make([][]float32, 0, len(texts))
 
 	for _, texts := range batchedTexts {
 		curTextEmbeddings, err := te.createEmbedding(ctx, texts)
@@ -74,7 +74,7 @@ func (te *TitanEmbedder) EmbedDocuments(ctx context.Context, texts []string) ([]
 	return emb, nil
 }
 
-func (te *TitanEmbedder) EmbedQuery(ctx context.Context, text string) ([]float64, error) {
+func (te *TitanEmbedder) EmbedQuery(ctx context.Context, text string) ([]float32, error) {
 	if te.StripNewLines {
 		text = strings.ReplaceAll(text, "\n", " ")
 	}
@@ -91,11 +91,11 @@ const (
 	titanEmbeddingModelID = "amazon.titan-embed-text-v1" //https://docs.aws.amazon.com/bedrock/latest/userguide/model-ids-arns.html
 )
 
-func (te *TitanEmbedder) createEmbedding(ctx context.Context, texts []string) ([][]float64, error) {
+func (te *TitanEmbedder) createEmbedding(ctx context.Context, texts []string) ([][]float32, error) {
 
 	//fmt.Println("embeddeding will be calculated for following words")
 
-	embeddings := make([][]float64, 0, len(texts))
+	embeddings := make([][]float32, 0, len(texts))
 
 	var payload titan_embedding.Request
 
