@@ -4,6 +4,8 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"fmt"
+	"log"
 	"strings"
 
 	titan_embedding "github.com/abhirockzz/amazon-bedrock-go-inference-params/amazontitan/embedding"
@@ -45,10 +47,18 @@ func New(region string) (*TitanEmbedder, error) {
 
 func (te *TitanEmbedder) EmbedDocuments(ctx context.Context, texts []string) ([][]float32, error) {
 
+	log.Println("ENTER TitanEmbedder/EmbedDocuments")
+
 	batchedTexts := embeddings.BatchTexts(
 		embeddings.MaybeRemoveNewLines(texts, te.StripNewLines),
 		te.BatchSize,
 	)
+
+	log.Println("output after creating batched texts")
+
+	for _, text := range batchedTexts {
+		fmt.Println(text)
+	}
 
 	emb := make([][]float32, 0, len(texts))
 
@@ -70,6 +80,8 @@ func (te *TitanEmbedder) EmbedDocuments(ctx context.Context, texts []string) ([]
 
 		emb = append(emb, combined)
 	}
+
+	log.Println("EXIT TitanEmbedder/EmbedDocuments")
 
 	return emb, nil
 }
@@ -93,7 +105,7 @@ const (
 
 func (te *TitanEmbedder) createEmbedding(ctx context.Context, texts []string) ([][]float32, error) {
 
-	//fmt.Println("embeddeding will be calculated for following words")
+	log.Println("ENTER TitanEmbedder/createEmbedding")
 
 	embeddings := make([][]float32, 0, len(texts))
 
@@ -109,6 +121,8 @@ func (te *TitanEmbedder) createEmbedding(ctx context.Context, texts []string) ([
 		if err != nil {
 			return nil, err
 		}
+
+		log.Println("creating embedding for", input)
 
 		output, err := te.brc.InvokeModel(context.Background(), &bedrockruntime.InvokeModelInput{
 			Body:        payloadBytes,
@@ -128,9 +142,11 @@ func (te *TitanEmbedder) createEmbedding(ctx context.Context, texts []string) ([
 			return nil, err
 		}
 
-		//fmt.Println("response from LLM\n", resp.Embedding)
+		log.Println("embedding response from LLM\n", resp.Embedding)
 		embeddings = append(embeddings, resp.Embedding)
 	}
+
+	log.Println("EXIT TitanEmbedder/createEmbedding")
 
 	return embeddings, nil
 }
