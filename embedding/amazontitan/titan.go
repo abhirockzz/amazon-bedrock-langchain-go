@@ -142,7 +142,7 @@ func (te *TitanEmbedder) createEmbedding(ctx context.Context, texts []string) ([
 			return nil, err
 		}
 
-		log.Println("embedding response from LLM\n", resp.Embedding)
+		log.Println("finished creating embedding for", input)
 		embeddings = append(embeddings, resp.Embedding)
 	}
 
