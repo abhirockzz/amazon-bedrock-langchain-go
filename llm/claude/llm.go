@@ -97,7 +97,7 @@ func (o *LLM) Generate(ctx context.Context, prompts []string, options ...llms.Ca
 		log.Fatal(err)
 	}
 
-	log.Println("payload\n", string(payloadBytes))
+	//log.Println("payload\n", string(payloadBytes))
 
 	output, err := o.brc.InvokeModel(context.Background(), &bedrockruntime.InvokeModelInput{
 		Body:        payloadBytes,
