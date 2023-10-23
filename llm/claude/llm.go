@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"log"
 
 	"github.com/abhirockzz/amazon-bedrock-go-inference-params/claude"
@@ -18,8 +19,9 @@ import (
 var ErrEmptyResponse = errors.New("empty response")
 
 type LLM struct {
-	CallbacksHandler callbacks.Handler
-	brc              *bedrockruntime.Client
+	CallbacksHandler        callbacks.Handler
+	brc                     *bedrockruntime.Client
+	UseHumanAssistantPrompt bool
 }
 
 var (
@@ -43,7 +45,8 @@ func New(region string) (*LLM, error) {
 	}
 
 	return &LLM{
-		brc: bedrockruntime.NewFromConfig(cfg),
+		brc:                     bedrockruntime.NewFromConfig(cfg),
+		UseHumanAssistantPrompt: true,
 	}, nil
 }
 
@@ -59,8 +62,8 @@ func (o *LLM) Call(ctx context.Context, prompt string, options ...llms.CallOptio
 }
 
 const (
-	//claudePromptFormat = "\n\nHuman:%s\n\nAssistant:"
-	claudeV2ModelID = "anthropic.claude-v2" //https://docs.aws.amazon.com/bedrock/latest/userguide/model-ids-arns.html
+	claudePromptFormat = "\n\nHuman:%s\n\nAssistant:"
+	claudeV2ModelID    = "anthropic.claude-v2" //https://docs.aws.amazon.com/bedrock/latest/userguide/model-ids-arns.html
 )
 
 func (o *LLM) Generate(ctx context.Context, prompts []string, options ...llms.CallOption) ([]*llms.Generation, error) {
@@ -75,12 +78,18 @@ func (o *LLM) Generate(ctx context.Context, prompts []string, options ...llms.Ca
 
 	payload := claude.Request{
 		//Prompt: fmt.Sprintf(claudePromptFormat, prompts[0]),
-		Prompt:            prompts[0],
+		//Prompt:            prompts[0],
 		MaxTokensToSample: opts.MaxTokens,
 		Temperature:       opts.Temperature,
 		TopK:              opts.TopK,
 		TopP:              opts.TopP,
 		StopSequences:     opts.StopWords,
+	}
+
+	if o.UseHumanAssistantPrompt {
+		payload.Prompt = fmt.Sprintf(claudePromptFormat, prompts[0])
+	} else {
+		payload.Prompt = prompts[0]
 	}
 
 	payloadBytes, err := json.Marshal(payload)
