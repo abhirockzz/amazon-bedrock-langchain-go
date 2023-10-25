@@ -8,6 +8,7 @@ import (
 	"log"
 
 	"github.com/abhirockzz/amazon-bedrock-go-inference-params/claude"
+	"github.com/abhirockzz/amazon-bedrock-langchain-go/llm"
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/config"
 	"github.com/aws/aws-sdk-go-v2/service/bedrockruntime"
@@ -21,7 +22,8 @@ var ErrEmptyResponse = errors.New("empty response")
 type LLM struct {
 	CallbacksHandler        callbacks.Handler
 	brc                     *bedrockruntime.Client
-	UseHumanAssistantPrompt bool
+	useHumanAssistantPrompt bool
+	modelID                 string
 }
 
 var (
@@ -33,21 +35,39 @@ var (
 	ErrMissingRegion = errors.New("empty region")
 )
 
-func New(region string) (*LLM, error) {
+func New(region string, options ...llm.ConfigOption) (*LLM, error) {
 
 	if region == "" {
 		return nil, ErrMissingRegion
 	}
 
-	cfg, err := config.LoadDefaultConfig(context.Background(), config.WithRegion(region))
-	if err != nil {
-		return nil, err
+	claudeLLM := &LLM{useHumanAssistantPrompt: true, modelID: claudeV2ModelID}
+
+	opts := &llm.ConfigOptions{}
+	for _, opt := range options {
+		opt(opts)
 	}
 
-	return &LLM{
-		brc:                     bedrockruntime.NewFromConfig(cfg),
-		UseHumanAssistantPrompt: true,
-	}, nil
+	if opts.BedrockRuntimeClient == nil {
+		cfg, err := config.LoadDefaultConfig(context.Background(), config.WithRegion(region))
+		if err != nil {
+			return nil, err
+		}
+
+		claudeLLM.brc = bedrockruntime.NewFromConfig(cfg)
+	} else {
+		claudeLLM.brc = opts.BedrockRuntimeClient
+	}
+
+	if opts.DontUseHumanAssistantPrompt {
+		claudeLLM.useHumanAssistantPrompt = false
+	}
+
+	if opts.ModelID != "" {
+		claudeLLM.modelID = opts.ModelID
+	}
+
+	return claudeLLM, nil
 }
 
 func (o *LLM) Call(ctx context.Context, prompt string, options ...llms.CallOption) (string, error) {
@@ -78,7 +98,6 @@ func (o *LLM) Generate(ctx context.Context, prompts []string, options ...llms.Ca
 
 	payload := claude.Request{
 		//Prompt: fmt.Sprintf(claudePromptFormat, prompts[0]),
-		//Prompt:            prompts[0],
 		MaxTokensToSample: opts.MaxTokens,
 		Temperature:       opts.Temperature,
 		TopK:              opts.TopK,
@@ -86,7 +105,7 @@ func (o *LLM) Generate(ctx context.Context, prompts []string, options ...llms.Ca
 		StopSequences:     opts.StopWords,
 	}
 
-	if o.UseHumanAssistantPrompt {
+	if o.useHumanAssistantPrompt {
 		payload.Prompt = fmt.Sprintf(claudePromptFormat, prompts[0])
 	} else {
 		payload.Prompt = prompts[0]
@@ -101,7 +120,7 @@ func (o *LLM) Generate(ctx context.Context, prompts []string, options ...llms.Ca
 
 	output, err := o.brc.InvokeModel(context.Background(), &bedrockruntime.InvokeModelInput{
 		Body:        payloadBytes,
-		ModelId:     aws.String(claudeV2ModelID),
+		ModelId:     aws.String(o.modelID),
 		ContentType: aws.String("application/json"),
 	})
 
