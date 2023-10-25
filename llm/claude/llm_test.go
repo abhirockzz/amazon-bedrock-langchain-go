@@ -2,6 +2,7 @@ package claude
 
 import (
 	"context"
+	"fmt"
 	"testing"
 
 	"github.com/abhirockzz/amazon-bedrock-langchain-go/llm"
@@ -100,4 +101,21 @@ func TestGenerateWithUserSuppliedInvalidModelID(t *testing.T) {
 
 	_, err = claudeLLM.Generate(context.Background(), []string{"what's your name?"}, llms.WithMaxTokens(100))
 	assert.NotNil(t, err)
+}
+
+func TestGenerateWithStreamingResponse(t *testing.T) {
+
+	claudeLLM, err := New("us-east-1")
+
+	assert.Nil(t, err)
+
+	generations, err := claudeLLM.Generate(context.Background(), []string{"what's your name?"}, llms.WithMaxTokens(100), llms.WithStreamingFunc(func(ctx context.Context, chunk []byte) error {
+		fmt.Println(string(chunk))
+		return nil
+	}))
+	assert.Nil(t, err)
+
+	assert.Equal(t, 1, len(generations))
+
+	assert.Contains(t, generations[0].Text, "Claude")
 }

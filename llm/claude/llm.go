@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"log"
 
 	"github.com/abhirockzz/amazon-bedrock-go-inference-params/claude"
 	"github.com/abhirockzz/amazon-bedrock-langchain-go/llm"
@@ -113,27 +112,25 @@ func (o *LLM) Generate(ctx context.Context, prompts []string, options ...llms.Ca
 
 	payloadBytes, err := json.Marshal(payload)
 	if err != nil {
-		log.Fatal(err)
+		return nil, err
 	}
 
 	//log.Println("payload\n", string(payloadBytes))
 
-	output, err := o.brc.InvokeModel(context.Background(), &bedrockruntime.InvokeModelInput{
-		Body:        payloadBytes,
-		ModelId:     aws.String(o.modelID),
-		ContentType: aws.String("application/json"),
-	})
-
-	if err != nil {
-		return nil, err
-	}
-
 	var resp claude.Response
 
-	err = json.Unmarshal(output.Body, &resp)
+	if opts.StreamingFunc != nil {
 
-	if err != nil {
-		log.Fatal("failed to unmarshal", err)
+		resp, err = o.invokeAsyncAndGetResponse(payloadBytes, opts.StreamingFunc)
+		if err != nil {
+			return nil, err
+		}
+
+	} else {
+		resp, err = o.invokeAndGetResponse(payloadBytes)
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	generations := []*llms.Generation{
@@ -152,4 +149,50 @@ func (o *LLM) GeneratePrompt(ctx context.Context, prompts []schema.PromptValue, 
 
 func (o *LLM) GetNumTokens(text string) int {
 	return llms.CountTokens("gpt4", text)
+}
+
+func (o *LLM) invokeAndGetResponse(payloadBytes []byte) (claude.Response, error) {
+
+	output, err := o.brc.InvokeModel(context.Background(), &bedrockruntime.InvokeModelInput{
+		Body:        payloadBytes,
+		ModelId:     aws.String(o.modelID),
+		ContentType: aws.String("application/json"),
+	})
+
+	if err != nil {
+		return claude.Response{}, err
+	}
+
+	var resp claude.Response
+
+	err = json.Unmarshal(output.Body, &resp)
+
+	if err != nil {
+		return claude.Response{}, err
+	}
+
+	return resp, nil
+}
+
+func (o *LLM) invokeAsyncAndGetResponse(payloadBytes []byte, handler func(ctx context.Context, chunk []byte) error) (claude.Response, error) {
+
+	output, err := o.brc.InvokeModelWithResponseStream(context.Background(), &bedrockruntime.InvokeModelWithResponseStreamInput{
+		Body:        payloadBytes,
+		ModelId:     aws.String(o.modelID),
+		ContentType: aws.String("application/json"),
+	})
+
+	if err != nil {
+		return claude.Response{}, err
+	}
+
+	var resp claude.Response
+
+	resp, err = llm.ProcessStreamingOutput(output, handler)
+
+	if err != nil {
+		return claude.Response{}, err
+	}
+
+	return resp, nil
 }
