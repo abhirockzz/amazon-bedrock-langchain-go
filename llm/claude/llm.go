@@ -26,8 +26,8 @@ type LLM struct {
 }
 
 var (
-	_ llms.LLM           = (*LLM)(nil)
-	_ llms.LanguageModel = (*LLM)(nil)
+	_ llms.LLM = (*LLM)(nil)
+	//_ llms.LanguageModel = (*LLM)(nil)
 )
 
 var (

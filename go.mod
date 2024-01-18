@@ -1,6 +1,8 @@
 module github.com/abhirockzz/amazon-bedrock-langchain-go
 
-go 1.19
+go 1.21
+
+toolchain go1.21.4
 
 require (
 	github.com/abhirockzz/amazon-bedrock-go-inference-params v0.0.0-20240118155133-42695da19d66
@@ -8,7 +10,7 @@ require (
 	github.com/aws/aws-sdk-go-v2/config v1.18.39
 	github.com/aws/aws-sdk-go-v2/service/bedrockruntime v1.0.0
 	github.com/stretchr/testify v1.8.4
-	github.com/tmc/langchaingo v0.0.0-20230929160525-e16b77704b8d
+	github.com/tmc/langchaingo v0.1.3
 )
 
 require (
