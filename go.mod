@@ -3,7 +3,7 @@ module github.com/abhirockzz/amazon-bedrock-langchain-go
 go 1.19
 
 require (
-	github.com/abhirockzz/amazon-bedrock-go-inference-params v0.0.0-20231003045841-a5985794d7ae
+	github.com/abhirockzz/amazon-bedrock-go-inference-params v0.0.0-20240118155133-42695da19d66
 	github.com/aws/aws-sdk-go-v2 v1.21.0
 	github.com/aws/aws-sdk-go-v2/config v1.18.39
 	github.com/aws/aws-sdk-go-v2/service/bedrockruntime v1.0.0
@@ -24,7 +24,7 @@ require (
 	github.com/aws/aws-sdk-go-v2/service/sts v1.21.5 // indirect
 	github.com/aws/smithy-go v1.14.2 // indirect
 	github.com/davecgh/go-spew v1.1.1 // indirect
-	github.com/dlclark/regexp2 v1.8.1 // indirect
+	github.com/dlclark/regexp2 v1.10.0 // indirect
 	github.com/google/uuid v1.3.0 // indirect
 	github.com/pkoukk/tiktoken-go v0.1.2 // indirect
 	github.com/pmezard/go-difflib v1.0.0 // indirect

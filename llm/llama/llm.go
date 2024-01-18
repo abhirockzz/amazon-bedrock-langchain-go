@@ -1,12 +1,12 @@
-package claude
+package llama
 
 import (
 	"context"
 	"encoding/json"
 	"errors"
-	"fmt"
+	"log"
 
-	"github.com/abhirockzz/amazon-bedrock-go-inference-params/claude"
+	"github.com/abhirockzz/amazon-bedrock-go-inference-params/llama"
 	"github.com/abhirockzz/amazon-bedrock-langchain-go/llm"
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/config"
@@ -19,10 +19,9 @@ import (
 var ErrEmptyResponse = errors.New("empty response")
 
 type LLM struct {
-	CallbacksHandler        callbacks.Handler
-	brc                     *bedrockruntime.Client
-	useHumanAssistantPrompt bool
-	modelID                 string
+	CallbacksHandler callbacks.Handler
+	brc              *bedrockruntime.Client
+	modelID          string
 }
 
 var (
@@ -40,7 +39,7 @@ func New(region string, options ...llm.ConfigOption) (*LLM, error) {
 		return nil, ErrMissingRegion
 	}
 
-	claudeLLM := &LLM{useHumanAssistantPrompt: true, modelID: claudeV2ModelID}
+	llamaLLM := &LLM{modelID: defaultModelID}
 
 	opts := &llm.ConfigOptions{}
 	for _, opt := range options {
@@ -53,20 +52,16 @@ func New(region string, options ...llm.ConfigOption) (*LLM, error) {
 			return nil, err
 		}
 
-		claudeLLM.brc = bedrockruntime.NewFromConfig(cfg)
+		llamaLLM.brc = bedrockruntime.NewFromConfig(cfg)
 	} else {
-		claudeLLM.brc = opts.BedrockRuntimeClient
-	}
-
-	if opts.DontUseHumanAssistantPrompt {
-		claudeLLM.useHumanAssistantPrompt = false
+		llamaLLM.brc = opts.BedrockRuntimeClient
 	}
 
 	if opts.ModelID != "" {
-		claudeLLM.modelID = opts.ModelID
+		llamaLLM.modelID = opts.ModelID
 	}
 
-	return claudeLLM, nil
+	return llamaLLM, nil
 }
 
 func (o *LLM) Call(ctx context.Context, prompt string, options ...llms.CallOption) (string, error) {
@@ -81,8 +76,7 @@ func (o *LLM) Call(ctx context.Context, prompt string, options ...llms.CallOptio
 }
 
 const (
-	claudePromptFormat = "\n\nHuman:%s\n\nAssistant:"
-	claudeV2ModelID    = "anthropic.claude-v2" //https://docs.aws.amazon.com/bedrock/latest/userguide/model-ids-arns.html
+	defaultModelID = "meta.llama2-13b-chat-v1" //https://docs.aws.amazon.com/bedrock/latest/userguide/model-ids-arns.html
 )
 
 func (o *LLM) Generate(ctx context.Context, prompts []string, options ...llms.CallOption) ([]*llms.Generation, error) {
@@ -95,19 +89,11 @@ func (o *LLM) Generate(ctx context.Context, prompts []string, options ...llms.Ca
 		opt(opts)
 	}
 
-	payload := claude.Request{
-		//Prompt: fmt.Sprintf(claudePromptFormat, prompts[0]),
-		MaxTokensToSample: opts.MaxTokens,
-		Temperature:       opts.Temperature,
-		TopK:              opts.TopK,
-		TopP:              opts.TopP,
-		StopSequences:     opts.StopWords,
-	}
-
-	if o.useHumanAssistantPrompt {
-		payload.Prompt = fmt.Sprintf(claudePromptFormat, prompts[0])
-	} else {
-		payload.Prompt = prompts[0]
+	payload := llama.Request{
+		Prompt:      prompts[0],
+		MaxGenLen:   opts.MaxTokens,
+		Temperature: opts.Temperature,
+		TopP:        opts.TopP,
 	}
 
 	payloadBytes, err := json.Marshal(payload)
@@ -115,9 +101,9 @@ func (o *LLM) Generate(ctx context.Context, prompts []string, options ...llms.Ca
 		return nil, err
 	}
 
-	//log.Println("payload\n", string(payloadBytes))
+	log.Println("payload\n", string(payloadBytes))
 
-	var resp claude.Response
+	var resp llama.Response
 
 	if opts.StreamingFunc != nil {
 
@@ -134,7 +120,7 @@ func (o *LLM) Generate(ctx context.Context, prompts []string, options ...llms.Ca
 	}
 
 	generations := []*llms.Generation{
-		{Text: resp.Completion},
+		{Text: resp.GetResponseString()},
 	}
 
 	if o.CallbacksHandler != nil {
@@ -151,30 +137,31 @@ func (o *LLM) GetNumTokens(text string) int {
 	return llms.CountTokens("gpt4", text)
 }
 
-func (o *LLM) invokeAndGetResponse(payloadBytes []byte) (claude.Response, error) {
+func (o *LLM) invokeAndGetResponse(payloadBytes []byte) (llama.Response, error) {
 
 	output, err := o.brc.InvokeModel(context.Background(), &bedrockruntime.InvokeModelInput{
 		Body:        payloadBytes,
 		ModelId:     aws.String(o.modelID),
 		ContentType: aws.String("application/json"),
+		Accept:      aws.String("application/json"),
 	})
 
 	if err != nil {
-		return claude.Response{}, err
+		return llama.Response{}, err
 	}
 
-	var resp claude.Response
+	var resp llama.Response
 
 	err = json.Unmarshal(output.Body, &resp)
 
 	if err != nil {
-		return claude.Response{}, err
+		return llama.Response{}, err
 	}
 
 	return resp, nil
 }
 
-func (o *LLM) invokeAsyncAndGetResponse(payloadBytes []byte, handler func(ctx context.Context, chunk []byte) error) (claude.Response, error) {
+func (o *LLM) invokeAsyncAndGetResponse(payloadBytes []byte, handler func(ctx context.Context, chunk []byte) error) (llama.Response, error) {
 
 	output, err := o.brc.InvokeModelWithResponseStream(context.Background(), &bedrockruntime.InvokeModelWithResponseStreamInput{
 		Body:        payloadBytes,
@@ -183,15 +170,15 @@ func (o *LLM) invokeAsyncAndGetResponse(payloadBytes []byte, handler func(ctx co
 	})
 
 	if err != nil {
-		return claude.Response{}, err
+		return llama.Response{}, err
 	}
 
-	var resp claude.Response
+	var resp llama.Response
 
 	resp, err = ProcessStreamingOutput(output, handler)
 
 	if err != nil {
-		return claude.Response{}, err
+		return llama.Response{}, err
 	}
 
 	return resp, nil
